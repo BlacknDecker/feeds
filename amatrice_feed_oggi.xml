@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<rss version="2.0">
+   <channel>
+      <title>Previsioni Meteo AMATRICE (RI) 01/09/2016</title>
+      <link>http://www.meteoam.it/ta/previsione/494</link>
+      <description>Previsioni Meteo Orarie</description>
+      <pubDate>Thu, 01 Sep 2016 20:11:27 +0200</pubDate>
+      <item>
+         <title>20:00</title>
+         <link>http://www.meteoam.it</link>
+         <description><![CDATA[ <strong>Fenomeni Intensi:</strong> - <br /><strong>Tempo:</strong> Sereno <br /><strong>Probabilità Precipitazioni:</strong> - <br /><strong>Temperatura:</strong> 19 °C <br /><strong>Temperatura Percepita:</strong> 19 °C <br /><strong>Umidità:</strong> 72% <br /><strong>Vento:</strong> Direzione NE, Intensità media 5 km/h <br /><strong>Raffiche:</strong> 13 km/h <br />]]></description>
+      </item>
+      <item>
+         <title>23:00</title>
+         <link>http://www.meteoam.it</link>
+         <description><![CDATA[ <strong>Fenomeni Intensi:</strong> - <br /><strong>Tempo:</strong> Sereno <br /><strong>Probabilità Precipitazioni:</strong> - <br /><strong>Temperatura:</strong> 16 °C <br /><strong>Temperatura Percepita:</strong> 16 °C <br /><strong>Umidità:</strong> 78% <br /><strong>Vento:</strong> Calma di vento <br /><strong>Raffiche:</strong> 13 km/h <br />]]></description>
+      </item>
+   </channel>
+</rss>
