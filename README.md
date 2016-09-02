@@ -1,2 +1,2 @@
-# feeds
-generazione di feed RSS in xml
+# Programmi per la generazione di Feed RSS
+in formato xml
