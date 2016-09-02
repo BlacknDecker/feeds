@@ -8,19 +8,19 @@ def getHTML(n):
 	user_agent= 'Mozilla/5.0 (Windows NT 6.1; WOW64)'
 	headers = {'user-agent' : user_agent}				#il sito richiede un userAgent
 	res = requests.get(url, headers=headers) 			#scarico l'html
-	res.raise_for_status() 								#se ci sono problemi interrompo il programma
-	return res.text										#restituisco l'html in forma testuale
+	res.raise_for_status() 						#se ci sono problemi interrompo il programma
+	return res.text							#restituisco l'html in forma testuale
 
 
 #Trova le date delle 3 previsioni disponibili nella pagina e le ritorna in una lista
 def findDates(pageSoup):
 	tagList= pageSoup.find_all('th')
 	dateRegex= re.compile(r'\d\d/\d\d/\d\d\d\d')	#regex per la data
-	dList= [] 										#lista delle date
+	dList= [] 					#lista delle date
 	for t in tagList:
-		mo= dateRegex.search(t.text)				#match object
+		mo= dateRegex.search(t.text)		#match object
 		if mo is not None:
-			dList.append(mo.group())				#se ho trovato una data la inserisco in lista
+			dList.append(mo.group())	#se ho trovato una data la inserisco in lista
 	return dList
 
 
@@ -33,12 +33,12 @@ def getLocation(pageSoup):
 	rawStr= strList[0]
 	#Ora controllo se il comune esiste
 	strList= rawStr.split(' ') 		#lista delle parole della frase
-	if strList[1].lower()=='per': 	#non trovato
-		return 'NF'					#not found
+	if strList[1].lower()=='per': 		#non trovato
+		return 'NF'			#not found
 	else:
-		strList= strList[3:-1]	#prendo solo le parole del nome + provincia
-		nameList= strList[0:-1]	#prendo solo le parole del nome
-		provincia= strList[-1]	#prendo la provincia
+		strList= strList[3:-1]		#prendo solo le parole del nome + provincia
+		nameList= strList[0:-1]		#prendo solo le parole del nome
+		provincia= strList[-1]		#prendo la provincia
 		#compongo la stringa
 		strFinal= ' '.join(nameList)+' '+provincia
 		return strFinal		
@@ -47,7 +47,7 @@ def getLocation(pageSoup):
 #prende la lista dei Fenomeni Intensi segnalati
 def getFIList(fiTag):	
 	tmpL= fiTag.find_all('img')
-	fil= []								#fenomeni intensi list
+	fil= []						#fenomeni intensi list
 	if tmpL is not None:
 		for t in tmpL:
 			fil.append(t.get('title'))	#Aggiungo il fenomeno segnalato
@@ -59,7 +59,7 @@ def getFIList(fiTag):
 #prende le info a partire dal tag dell'ora dato:
 def getInfoList(hTag):
 	itl= hTag.find_all('td')						#creo la lista tag delle info (infoTagList)
-	il= []											#infoList
+	il= []									#infoList
 	#Prendo le singole informazioni:
 	fenInt= getFIList(itl[0])						#fen. intensi
 	meteo= itl[1].find_all('img')[0].get('title')	#meteo
@@ -79,20 +79,20 @@ def getInfoList(hTag):
 #Prende il tag del giorno e il giorno scelto e ne estrae il meteo. Ritorna una lista con le info suddivise per ore
 def getDayMeteoList(dayTag, dayInt):
 	hourTagList= dayTag.find_all('tr')		#Lista dei tag che suddividono le info meteo per orario
-	dml= [] 								#DayMeteoList
+	dml= [] 					#DayMeteoList
 	for ht in hourTagList:
-		hml=[]								#HourMeteoList
+		hml=[]					#HourMeteoList
 		ora= ht.find_all('th')[0].text 		#prendo l'orario
-		hml.append(ora)						#lo aggiungo alla lista
-		hml.append(getInfoList(ht))			#aggiungo la lista delle info
-		dml.append(hml)						#aggiungo la lista oraria alla lista giornaliera
-	return dml 								#ritorno la DayMeteoList
+		hml.append(ora)				#lo aggiungo alla lista
+		hml.append(getInfoList(ht))		#aggiungo la lista delle info
+		dml.append(hml)				#aggiungo la lista oraria alla lista giornaliera
+	return dml 					#ritorno la DayMeteoList
 		
 
 #Imposta l'html testuale per l'estrazione
 def setupMeteoList(pageSoup):
-	dayTagList= pageSoup.find_all('tbody')		#lista dei tag che contengono le previsioni di una giornata
-	dayTagList= dayTagList[0:3]					#poichè esistono anche altre tabelle, prendo solo i 3 campi che mi servono (0=oggi,1=domani,2=dopodomani)
+	dayTagList= pageSoup.find_all('tbody')			#lista dei tag che contengono le previsioni di una giornata
+	dayTagList= dayTagList[0:3]				#poichè esistono anche altre tabelle, prendo solo i 3 campi che mi servono (0=oggi,1=domani,2=dopodomani)
 	meteoList= []
 	meteoList.append(getDayMeteoList(dayTagList[0], 0))
 	meteoList.append(getDayMeteoList(dayTagList[1], 1))
@@ -112,27 +112,27 @@ def getUpdateTime():
 
 ########CREO IL FEED XML###############################################################
 def createXMLFeed(codLocalita,localita,dataPrevisioni,infoMeteoClassList,updateTime):
-	root= ET.Element('rss')												#Nodo Radice
-	root.set('version','2.0')											#attributo della radice
-	channel= ET.SubElement(root,'channel')								#Nodo Channel
-	title= ET.SubElement(channel,'title')								#Title del Channel
+	root= ET.Element('rss')								#Nodo Radice
+	root.set('version','2.0')							#attributo della radice
+	channel= ET.SubElement(root,'channel')						#Nodo Channel
+	title= ET.SubElement(channel,'title')						#Title del Channel
 	title.text= 'Previsioni Meteo '+localita+' '+dataPrevisioni
-	link= ET.SubElement(channel,'link')									#Link del Channel
+	link= ET.SubElement(channel,'link')						#Link del Channel
 	link.text= 'http://www.meteoam.it/ta/previsione/'+str(codLocalita)
-	description= ET.SubElement(channel,'description')					#Description del Channel
+	description= ET.SubElement(channel,'description')				#Description del Channel
 	description.text= 'Previsioni Meteo Orarie'
-	pubDate= ET.SubElement(channel,'pubDate')							#Data e ora dell'ultimo aggiornamento
+	pubDate= ET.SubElement(channel,'pubDate')					#Data e ora dell'ultimo aggiornamento
 	pubDate.text= ''+updateTime
 	##Inizio le previsioni per orario
-	for h in infoMeteoClassList:										#infoMeteoClassList==DayMeteoList del giorno scelto
-		item= ET.SubElement(channel,'item')								#Creo un elemento per ogni ora
-		title= ET.SubElement(item,'title')								#Title dell'Item
-		title.text= h[0]												#inserisco l'orario nel titolo
-		link= ET.SubElement(item,'link')								#Link dell'Item
+	for h in infoMeteoClassList:							#infoMeteoClassList==DayMeteoList del giorno scelto
+		item= ET.SubElement(channel,'item')					#Creo un elemento per ogni ora
+		title= ET.SubElement(item,'title')					#Title dell'Item
+		title.text= h[0]							#inserisco l'orario nel titolo
+		link= ET.SubElement(item,'link')					#Link dell'Item
 		link.text= 'http://www.meteoam.it'
-		description= ET.SubElement(item,'description')					#Description dell'Item
-		description.text= getCDataInfo(h[1])							#inserisco i CData con le info <-----------
-		#description.text= getDescrizioneTestuale(h[1])					#oppure i dati testuali
+		description= ET.SubElement(item,'description')				#Description dell'Item
+		description.text= getCDataInfo(h[1])					#inserisco i CData con le info <-----------
+		#description.text= getDescrizioneTestuale(h[1])				#oppure i dati testuali
 	return root
 
 #Creo una stringa CData con le info meteo
@@ -141,28 +141,28 @@ def getCDataInfo(infoL):
 	if len(infoL[0])==0:
 		cd+= '<strong>Fenomeni Intensi:</strong> - <br />'
 	else:
-		cd+= '<strong>Fenomeni Intensi:</strong> '		+ str(infoL[0]) +' <br />'
-	cd+= '<strong>Tempo:</strong> '						+ infoL[1] +' <br />'
-	cd+= '<strong>Probabilità Precipitazioni:</strong> '+ infoL[2] +' <br />'
-	cd+= '<strong>Temperatura:</strong> '				+ infoL[3] +' °C'+' <br />'
+		cd+= '<strong>Fenomeni Intensi:</strong> '  + str(infoL[0]) +' <br />'
+	cd+= '<strong>Tempo:</strong> '				+ infoL[1] +' <br />'
+	cd+= '<strong>Probabilità Precipitazioni:</strong> '	+ infoL[2] +' <br />'
+	cd+= '<strong>Temperatura:</strong> '			+ infoL[3] +' °C'+' <br />'
 	cd+= '<strong>Temperatura Percepita:</strong> '		+ infoL[4] +' °C'+' <br />'
-	cd+= '<strong>Umidità:</strong> '					+ infoL[5] +'%'+' <br />'
-	cd+= '<strong>Vento:</strong> '						+ infoL[6] +' <br />'
-	cd+= '<strong>Raffiche:</strong> '					+ infoL[7] +' km/h'+' <br />'
+	cd+= '<strong>Umidità:</strong> '			+ infoL[5] +'%'+' <br />'
+	cd+= '<strong>Vento:</strong> '				+ infoL[6] +' <br />'
+	cd+= '<strong>Raffiche:</strong> '			+ infoL[7] +' km/h'+' <br />'
 	cd+= ']]>'
 	return cd
 
 #Creo una stringa con le info in forma testuale (solo in caso che i CData non vadano bene)
 def getDescrizioneTestuale(infoL):
 	dt=''
-	dt+= 'Fenomeni Intensi: ' 				+ str(infoL[0]) +'\n'
-	dt+= 'Tempo: '			 				+ str(infoL[1]) +'\n'
+	dt+= 'Fenomeni Intensi: ' 		+ str(infoL[0]) +'\n'
+	dt+= 'Tempo: '			 	+ str(infoL[1]) +'\n'
 	dt+= 'Probabilità di Precipitazioni: '	+ str(infoL[2]) +'\n'
-	dt+= 'Temperatura: '					+ str(infoL[3]) +' °C'+'\n'
-	dt+= 'Temperatura Percepita: '			+ str(infoL[4]) +' °C'+'\n'
-	dt+= 'Umidità: '						+ str(infoL[5]) +'%'+'\n'
-	dt+= 'Vento: '							+ str(infoL[6]) +' km/h'+'\n'
-	dt+= 'Raffiche: '						+ str(infoL[7]) +' km/h'+'\n'
+	dt+= 'Temperatura: '			+ str(infoL[3]) +' °C'+'\n'
+	dt+= 'Temperatura Percepita: '		+ str(infoL[4]) +' °C'+'\n'
+	dt+= 'Umidità: '			+ str(infoL[5]) +'%'+'\n'
+	dt+= 'Vento: '				+ str(infoL[6]) +' km/h'+'\n'
+	dt+= 'Raffiche: '			+ str(infoL[7]) +' km/h'+'\n'
 	return dt
 
 #Return a pretty-printed XML string for the Element.
@@ -212,7 +212,7 @@ def getLocationCodes(fileName):
 
 #Master of Puppets
 def init():
-	fileName= 'localita_meteoAM.txt'						#Nome del file in cui si trova la lista di località
+	fileName= 'localita_meteoAM.txt'				#Nome del file in cui si trova la lista di località
 	codiciLoc= getLocationCodes(fileName)
 	#Per ogni codice creo i file meteo
 	for cod in codiciLoc:
