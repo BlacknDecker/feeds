@@ -190,6 +190,8 @@ def salvaSuFile(strXML,loc,codicePrevisione):
 	ind= loc.find('(')
 	loc=loc[:ind-1] 							#prendo solo il nome
 	loc= ''.join(loc.split(' '))						#tolgo gli spazi
+	if not os.path.exists('.\\feeds'):
+		os.makedirs('.\\feeds')						#creo la cartella per i feed se non esiste
 	locFile= open('.\\feeds\\'+loc.lower()+'_feed_'+prev+'.xml', 'w')	#salvo i feed in una sottocartella
 	locFile.write(formattingFix(strXML))
 	locFile.close()
