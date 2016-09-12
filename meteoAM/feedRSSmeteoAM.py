@@ -1,6 +1,5 @@
 #! python3
-# -*- coding: UTF-8 -*-
-import requests, bs4, re, xml.etree.ElementTree as ET, datetime, xml.dom.minidom as minidom, os 
+import requests, bs4, re, xml.etree.ElementTree as ET, datetime, xml.dom.minidom as minidom, os, hashlib 
 
 #########ESTRAGGO I DATI DALL'HTML######################################################
 #prende l'html della pagina col codice richiesto
@@ -115,6 +114,7 @@ def getUpdateTime():
 def createXMLFeed(codLocalita,localita,dataPrevisioni,infoMeteoClassList,updateTime):
     root= ET.Element('rss')                                             #Nodo Radice
     root.set('version','2.0')                                           #attributo della radice
+    #root.set('xmlns:atom','http://www.w3.org/2005/Atom')               #ATOM <-----
     channel= ET.SubElement(root,'channel')                              #Nodo Channel
     title= ET.SubElement(channel,'title')                               #Title del Channel
     title.text= 'Previsioni Meteo '+localita+' '+dataPrevisioni
@@ -125,16 +125,30 @@ def createXMLFeed(codLocalita,localita,dataPrevisioni,infoMeteoClassList,updateT
     pubDate= ET.SubElement(channel,'pubDate')                           #Data e ora dell'ultimo aggiornamento
     pubDate.text= ''+updateTime
     ##Inizio le previsioni per orario
+    itemNumber= 0                                                       #Conto il numero di Item
     for h in infoMeteoClassList:                                        #infoMeteoClassList==DayMeteoList del giorno scelto
         item= ET.SubElement(channel,'item')                             #Creo un elemento per ogni ora
         title= ET.SubElement(item,'title')                              #Title dell'Item
         title.text= h[0]                                                #inserisco l'orario nel titolo
+        guid= ET.SubElement(item,'guid')                                #Guid dell'Item
+        guid.set('isPermaLink','false')                                 #attributo di guid
+        guid.text= getGuid(updateTime, itemNumber)                      #Creo il codice univoco
+        itemNumber+=1                                                   #Aggiorno il numero per l'oggetto successivo
         link= ET.SubElement(item,'link')                                #Link dell'Item
         link.text= 'http://www.meteoam.it'
         description= ET.SubElement(item,'description')                  #Description dell'Item
         description.text= getCDataInfo(h[1])                            #inserisco i CData con le info <-----------
         #description.text= getDescrizioneTestuale(h[1])                 #oppure i dati testuali
     return root
+
+
+#Creo un identificatore univoco per l'Item, da inserire nel campo guid:
+def getGuid(updateTime, itemNumber):
+    m= hashlib.md5()                    #creo l'oggetto hash
+    tmp= updateTime+' '+str(itemNumber) #creo la stringa da codificare
+    m.update(tmp.encode())              #aggiungo la stringa (in byte) alla tabella
+    return m.hexdigest()                #ritorno la stringa creata
+
 
 #Creo una stringa CData con le info meteo
 def getCDataInfo(infoL):
