@@ -111,15 +111,17 @@ def getUpdateTime():
 
 
 ########CREO IL FEED XML###############################################################
-def createXMLFeed(codLocalita,localita,dataPrevisioni,infoMeteoClassList,updateTime):
+def createXMLFeed(codLocalita,localita,dataPrevisioni,infoMeteoClassList,updateTime,codicePrevisione):
     root= ET.Element('rss')                                             #Nodo Radice
     root.set('version','2.0')                                           #attributo della radice
-    #root.set('xmlns:atom','http://www.w3.org/2005/Atom')               #ATOM <-----
+    root.set('xmlns:atom','http://www.w3.org/2005/Atom')                #ATOM <-------------------------------------
     channel= ET.SubElement(root,'channel')                              #Nodo Channel
     title= ET.SubElement(channel,'title')                               #Title del Channel
     title.text= 'Previsioni Meteo '+localita+' '+dataPrevisioni
     link= ET.SubElement(channel,'link')                                 #Link del Channel
     link.text= 'http://www.meteoam.it/ta/previsione/'+str(codLocalita)
+    atomLink= ET.SubElement(channel,'atom:link')                        #Creo il link Atom
+    atomLink= atomLSetup(atomLink,localita,codicePrevisione)            #imposto gli attributi   <------------------
     description= ET.SubElement(channel,'description')                   #Description del Channel
     description.text= 'Previsioni Meteo Orarie'
     pubDate= ET.SubElement(channel,'pubDate')                           #Data e ora dell'ultimo aggiornamento
@@ -141,6 +143,18 @@ def createXMLFeed(codLocalita,localita,dataPrevisioni,infoMeteoClassList,updateT
         #description.text= getDescrizioneTestuale(h[1])                 #oppure i dati testuali
     return root
 
+
+#Definisco gli attributi del tag Atom
+def atomLSetup(atomLink,localita,codicePrevisione):
+    rawURL= getRawURL()                                 #Estraggo il link del feed dal file di configurazione
+    fileName= createFileName(localita,codicePrevisione) #Ricreo il nome del file
+    url= rawURL+fileName                                #Creo l'url completo al file
+    #Imposto gli attributi:
+    atomLink.set('href',url)
+    atomLink.set('rel','self')
+    atomLink.set('type','application/rss+xml')
+    return atomLink                                     #Ritorno il Tag aggiornato
+    
 
 #Creo un identificatore univoco per l'Item, da inserire nel campo guid:
 def getGuid(updateTime, itemNumber):
@@ -198,19 +212,11 @@ def formattingFix(strXML):
 ########OPERAZIONI SUI FILE############################################################
 #Salvo il feed su file:
 def salvaSuFile(strXML,loc,codicePrevisione):
-    if codicePrevisione==0:
-        prev='oggi'
-    elif codicePrevisione==1:
-        prev='domani'
-    else:
-        prev='dopodomani'
-    ind= loc.find('(')
-    loc=loc[:ind-1]                                                     #prendo solo il nome
-    loc= ''.join(loc.split(' '))                                        #tolgo gli spazi
+    fileName= createFileName(loc,codicePrevisione)      #creo il nome del file
     if not os.path.exists('feeds'):
-        os.makedirs('feeds')                                            #creo la cartella per i feed se non esiste
-    path= os.path.join('feeds', loc.lower()+'_feed_'+prev+'.xml')       #creo il path
-    locFile= open(path, 'wb')                                           #salvo i feed in una sottocartella
+        os.makedirs('feeds')                            #creo la cartella per i feed se non esiste
+    path= os.path.join('feeds', fileName)               #creo il path
+    locFile= open(path, 'wb')                           #salvo i feed in una sottocartella
     locFile.write(formattingFix(strXML))
     locFile.close()
 
@@ -228,6 +234,38 @@ def getLocationCodes(fileName):
         tmp= l.split('|')
         listaCod.append(tmp[0])
     return listaCod
+
+
+#prendo il link in cui si trovano i feed dal file di configurazione:
+def getRawURL():
+    fileName= 'url_feeds.txt'
+    #Apro il file e prendo l'url generico
+    urlFile= open(fileName, 'r')
+    urlList= urlFile.read()
+    url= urlList[0]
+    if url[-1]!='/':
+        url+='/'        #aggiungo la slash finale
+    print('URL caricato: '+url)
+    return url
+
+#Crea una stringa col nome della localita formattata
+def getRawLocation(loc):
+    ind= loc.find('(')              #indice inizio provincia
+    loc=loc[:ind-1]                 #prendo solo il nome
+    loc= ''.join(loc.split(' '))    #tolgo gli spazi
+    return loc.lower()
+
+#Crea il nome del file
+def createFileName(loc,codicePrevisione):
+    #sostituisco il codice previsione:
+    if codicePrevisione==0:
+        prev='oggi'
+    elif codicePrevisione==1:
+        prev='domani'
+    else:
+        prev='dopodomani'
+    loc= getRawLocation(loc)           #ripulisco il nome
+    return loc+'_feed_'+prev+'.xml'    #restituisco il nome del file
 
 #######################################################################################
 
@@ -251,7 +289,7 @@ def init():
         print('Setup '+loc+' done!')
         #Ora creo i feed per le 3 previsioni:
         for i in range(0,3):
-            rawXML= createXMLFeed(cod,loc,dateList[i],listaInfoMeteoCat[i],upTime)  #xml grezzo
+            rawXML= createXMLFeed(cod,loc,dateList[i],listaInfoMeteoCat[i],upTime,i)  #xml grezzo
             #tmpStr= prettify(rawXML)                       #xml indentato restituito come stringa <--solo per visualizzazione!!
             tmpStr= ET.tostring(rawXML, 'utf-8')
             salvaSuFile(tmpStr,loc,i)                       #salvo il feed
