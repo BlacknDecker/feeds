@@ -241,11 +241,9 @@ def getRawURL():
     fileName= 'url_feeds.txt'
     #Apro il file e prendo l'url generico
     urlFile= open(fileName, 'r')
-    urlList= urlFile.read()
-    url= urlList[0]
+    url= urlFile.read()
     if url[-1]!='/':
         url+='/'        #aggiungo la slash finale
-    print('URL caricato: '+url)
     return url
 
 #Crea una stringa col nome della localita formattata
