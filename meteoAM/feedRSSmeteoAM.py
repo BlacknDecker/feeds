@@ -132,8 +132,8 @@ def createXMLFeed(codLocalita,localita,dataPrevisioni,infoMeteoClassList,updateT
         title.text= h[0]                                                #inserisco l'orario nel titolo
         guid= ET.SubElement(item,'guid')                                #Guid dell'Item
         guid.set('isPermaLink','false')                                 #attributo di guid
-        guid.text= getGuid(updateTime, itemNumber)                      #Creo il codice univoco
-        itemNumber+=1                                                   #Aggiorno il numero per l'oggetto successivo
+        guid.text= getGuid(updateTime, itemNumber)                      #Creo il codice univoco (da verificare)
+        itemNumber+=1                                                   #aggiorno il numero per l'Item successivo
         link= ET.SubElement(item,'link')                                #Link dell'Item
         link.text= 'http://www.meteoam.it'
         description= ET.SubElement(item,'description')                  #Description dell'Item
@@ -144,10 +144,11 @@ def createXMLFeed(codLocalita,localita,dataPrevisioni,infoMeteoClassList,updateT
 
 #Creo un identificatore univoco per l'Item, da inserire nel campo guid:
 def getGuid(updateTime, itemNumber):
-    m= hashlib.md5()                    #creo l'oggetto hash
-    tmp= updateTime+' '+str(itemNumber) #creo la stringa da codificare
-    m.update(tmp.encode())              #aggiungo la stringa (in byte) alla tabella
-    return m.hexdigest()                #ritorno la stringa creata
+    m= hashlib.md5()                                    #creo l'oggetto hash
+    dt= datetime.datetime.now()                         #prendo il tempo
+    tmp= updateTime+str(dt.microsecond)+str(itemNumber) #creo la stringa da codificare
+    m.update(tmp.encode())                              #aggiungo la stringa (in byte) alla tabella
+    return m.hexdigest()                                #ritorno la stringa creata
 
 
 #Creo una stringa CData con le info meteo
