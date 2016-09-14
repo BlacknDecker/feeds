@@ -1,1 +1,1 @@
-https://antani.org/scappellamento/destra
+https://server/scriptMeteo/feeds/
